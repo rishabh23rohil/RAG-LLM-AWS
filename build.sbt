@@ -1,26 +1,28 @@
 ThisBuild / scalaVersion := "3.5.1"
+ThisBuild / version      := "0.1.0"
+ThisBuild / organization := "dev.local"
 
-lazy val root = (project in file("."))
+lazy val `rag-app` = (project in file("."))
   .settings(
     name := "rag-app",
     libraryDependencies ++= Seq(
-      // Lucene core + analysis
-      "org.apache.lucene" % "lucene-core" % "9.10.0",
-      "org.apache.lucene" % "lucene-analysis-common" % "9.10.0",
+      // PDF parsing
+      "org.apache.pdfbox" % "pdfbox" % "2.0.30",
 
-      // PDF extraction
-      "org.apache.pdfbox" % "pdfbox" % "2.0.31",
+      // HTTP client (sttp)
+      "com.softwaremill.sttp.client3" %% "core"           % "3.9.7",
+      "com.softwaremill.sttp.client3" %% "okhttp-backend" % "3.9.7",
+      // JSON codec for sttp (adds sttp.client3.circe.*)
+      "com.softwaremill.sttp.client3" %% "circe"          % "3.9.7",
 
-      // HTTP client + JSON (Ollama API)
-      "com.softwaremill.sttp.client3" %% "core"  % "3.9.5",
-      "com.softwaremill.sttp.client3" %% "circe" % "3.9.5",
-      "io.circe" %% "circe-generic" % "0.14.9",
-      "io.circe" %% "circe-parser"  % "0.14.9",
-
-      // Logging
-      "ch.qos.logback" % "logback-classic" % "1.5.6",
+      // Circe core JSON library
+      "io.circe" %% "circe-core"    % "0.14.7",
+      "io.circe" %% "circe-generic" % "0.14.7",
+      "io.circe" %% "circe-parser"  % "0.14.7",
 
       // Testing
       "org.scalatest" %% "scalatest" % "3.2.19" % Test
-    )
+    ),
+    // help some IDEs detect the test framework
+    testFrameworks += new TestFramework("org.scalatest.tools.Framework")
   )
