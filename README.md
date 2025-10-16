@@ -1,8 +1,23 @@
-## sbt project compiled with Scala 3
+# CS441 HW1 — RAG Index Builder on Hadoop/Lucene/Ollama
 
-### Usage
+**Author:** Rishabh Rohil  
+**Email:** <your_uic_email@uic.edu>  
 
-This is a normal sbt project. You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
+## Overview
+- Build Lucene HNSW index over MSR PDFs with Ollama embeddings
+- Query via kNN (`KnnSearch`)
+- Produce vocabulary frequency + similarity/analogy CSVs
 
-For more information on the sbt-dotty plugin, see the
-[scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
+## Prereqs
+- JDK 17+, SBT 1.9+
+- Ollama running and `OLLAMA_HOST` set
+- (Option 1 path) Hadoop local & EMR for cloud run
+
+## Quick Start (Local)
+```bash
+sbt clean compile
+sbt "runMain rag.mr.JobRunner file:///.../local_paths.txt file:///.../var/mrstatus_XXX"
+# copy shard dirs -> ./lucene-index/shard-*
+sbt "runMain rag.lucene.InnnSearch lucene-index neural networks and attention mechanisms 5 default"
+sbt "runMain rag.stats.VocabStats"
+sbt "runMain rag.stats.SimilarityEval"
