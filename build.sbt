@@ -26,3 +26,12 @@ lazy val `rag-app` = (project in file("."))
     // help some IDEs detect the test framework
     testFrameworks += new TestFramework("org.scalatest.tools.Framework")
   )
+libraryDependencies ++= Seq(
+  "com.typesafe" % "config" % "1.4.3",
+  "ch.qos.logback" % "logback-classic" % "1.4.14"
+)
+libraryDependencies ++= Seq(
+  "org.apache.hadoop" % "hadoop-client" % "3.3.6",
+  "org.apache.lucene" % "lucene-core" % "9.10.0",
+  "org.apache.lucene" % "lucene-analysis-common" % "9.10.0"
+)

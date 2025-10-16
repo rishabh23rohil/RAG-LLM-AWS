@@ -1,14 +1,24 @@
+# sbt / Scala / IDE
 target/
 project/target/
 project/project/
 .metals/
 .bloop/
+.bsp/
 .idea/
 .vscode/
-out/
-logs/
-*.log
-*.class
+*.iml
+
+# OS / editor
 .DS_Store
-# local data
-pdfs/
+Thumbs.db
+
+# logs
+*.log
+
+# caches
+.cache/
+.out/
+
+# launcher jars / zips you don’t need in repo
+sbt-launch.jar
