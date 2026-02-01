@@ -18,33 +18,33 @@ flowchart LR
     end
 
     subgraph MapReduce["Hadoop MapReduce"]
-        M1[Mapper 1]
-        M2[Mapper 2]
-        M3[Mapper N]
-        R1[Reducer 1]
-        R2[Reducer K]
+        DV1[DocumentVectorizer 1]
+        DV2[DocumentVectorizer 2]
+        DVN[DocumentVectorizer N]
+        IPB1[IndexPartitionBuilder 1]
+        IPB2[IndexPartitionBuilder K]
     end
 
     subgraph Indexing
-        L1[Lucene Shard 1]
-        L2[Lucene Shard K]
+        P1[Partition 1]
+        PK[Partition K]
     end
 
     subgraph Query["Query Pipeline"]
         QE[Query Embedding]
-        KNN[KNN Search]
+        VSE[VectorSearchEngine]
         CTX[Context Assembly]
         LLM[LLM Generation]
     end
 
-    PDFs --> M1 & M2 & M3
-    M1 & M2 & M3 -->|chunks + vectors| R1 & R2
-    R1 --> L1
-    R2 --> L2
+    PDFs --> DV1 & DV2 & DVN
+    DV1 & DV2 & DVN -->|segments + vectors| IPB1 & IPB2
+    IPB1 --> P1
+    IPB2 --> PK
     
-    QE --> KNN
-    L1 & L2 --> KNN
-    KNN --> CTX --> LLM
+    QE --> VSE
+    P1 & PK --> VSE
+    VSE --> CTX --> LLM
 ```
 
 ---
@@ -53,9 +53,9 @@ flowchart LR
 
 - **Distributed Indexing** — Parallel PDF processing via MapReduce with configurable mappers/reducers
 - **Vector Search** — HNSW-based KNN search using Lucene with cosine, Euclidean, or dot-product similarity
-- **Query Pipeline** — End-to-end RAG: embed query → search shards → assemble context → generate answer
+- **Query Pipeline** — End-to-end RAG: embed query → search partitions → assemble context → generate answer
 - **REST API** — Http4s-based endpoints for querying, searching, and health checks
-- **Word Analytics** — Vocabulary statistics, semantic neighbors, word analogies, and similarity analysis
+- **Semantic Analytics** — Vocabulary statistics, semantic neighbors, word analogies, and similarity analysis
 - **Cloud Ready** — Deployable on AWS EMR with S3 storage
 
 ---
@@ -99,22 +99,22 @@ sbt assembly  # Creates fat JAR for deployment
 **1. Build RAG Index from PDFs:**
 
 ```bash
-hadoop jar target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
-  Driver rag /path/to/paths.txt /path/to/output mxbai-embed-large COSINE
+hadoop jar target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.core.Driver \
+  Driver index /path/to/paths.txt /path/to/output mxbai-embed-large COSINE
 ```
 
-**2. Generate Word Statistics:**
+**2. Generate Vocabulary Statistics:**
 
 ```bash
-hadoop jar target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
-  Driver wordstats /path/to/paths.txt /path/to/output mxbai-embed-large COSINE
+hadoop jar target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.core.Driver \
+  Driver vocabulary /path/to/paths.txt /path/to/output mxbai-embed-large COSINE
 ```
 
-**3. Post-process Embeddings:**
+**3. Run Semantic Analysis:**
 
 ```bash
-java -cp target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
-  Driver postprocess /path/to/wordstats/output dummy dummy
+java -cp target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.core.Driver \
+  Driver analyze /path/to/vocabulary/output dummy dummy
 ```
 
 **4. Start API Server:**
@@ -122,7 +122,7 @@ java -cp target/scala-3.5.1/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
 ```bash
 export RAG_INDEX_PATH=/path/to/lucene-index
 export RAG_API_PORT=8080
-sbt "runMain rag.RagApiServer"
+sbt "runMain rag.api.SearchApiService"
 ```
 
 ---
@@ -133,24 +133,40 @@ sbt "runMain rag.RagApiServer"
 RAG-LLM-AWS/
 ├── src/
 │   ├── main/scala/rag/
-│   │   ├── Driver.scala              # Entry point for all pipelines
-│   │   ├── RagMapper.scala           # PDF → chunks → embeddings
-│   │   ├── RagShardReducer.scala     # Builds Lucene HNSW shards
-│   │   ├── RagQuery.scala            # Search + answer generation
-│   │   ├── RagApiServer.scala        # REST API endpoints
-│   │   ├── Ollama.scala              # LLM client for embeddings/chat
-│   │   ├── Chunker.scala             # Text segmentation utility
-│   │   ├── Vectors.scala             # L2 normalization
-│   │   ├── WordStatsMapper.scala     # Vocabulary extraction
-│   │   ├── WordStatsReducer.scala    # Word frequency + embeddings
-│   │   └── PostProcessEmbeddings.scala # Semantic analysis
+│   │   ├── core/
+│   │   │   ├── Driver.scala              # Entry point for all pipelines
+│   │   │   └── Config.scala              # Centralized configuration
+│   │   ├── indexing/
+│   │   │   ├── DocumentVectorizer.scala  # PDF → segments → embeddings
+│   │   │   ├── IndexPartitionBuilder.scala # Builds Lucene HNSW partitions
+│   │   │   └── TextChunker.scala         # Text segmentation utility
+│   │   ├── search/
+│   │   │   ├── VectorSearchEngine.scala  # Search + answer generation
+│   │   │   ├── ShardedQueryExecutor.scala # Distributed query execution
+│   │   │   ├── ShardQueryMapper.scala    # Query partition mapper
+│   │   │   └── ResultMerger.scala        # Merge results from partitions
+│   │   ├── api/
+│   │   │   └── SearchApiService.scala    # REST API endpoints
+│   │   ├── embedding/
+│   │   │   ├── OllamaClient.scala        # LLM client for embeddings/chat
+│   │   │   └── VectorOps.scala           # Vector math utilities
+│   │   ├── analytics/
+│   │   │   ├── TokenFrequencyMapper.scala # Vocabulary extraction
+│   │   │   ├── EmbeddingAggregator.scala # Token frequency + embeddings
+│   │   │   └── SemanticAnalyzer.scala    # Semantic analysis tools
+│   │   └── util/
+│   │       └── PdfExtractor.scala        # PDF text extraction
 │   └── test/scala/rag/
-│       └── ...                        # Unit & integration tests
-├── outputs/                           # Sample pipeline outputs
-│   ├── vocab.csv                      # 75K word embeddings (1024-dim)
-│   ├── nearest_neighbors.csv          # Semantic neighbors
-│   ├── similar_pairs.csv              # Word similarity scores
-│   └── analogy_pairs.csv              # Vector arithmetic results
+│       ├── indexing/
+│       ├── search/
+│       ├── analytics/
+│       ├── api/
+│       └── embedding/
+├── outputs/                               # Sample pipeline outputs
+│   ├── vocab.csv                          # 4K+ token embeddings (1024-dim)
+│   ├── nearest_neighbors.csv              # Semantic neighbors
+│   ├── similar_pairs.csv                  # Word similarity scores
+│   └── analogy_pairs.csv                  # Vector arithmetic results
 ├── project/
 │   ├── build.properties
 │   └── plugins.sbt
@@ -162,29 +178,29 @@ RAG-LLM-AWS/
 
 ## API Endpoints
 
-### Query (Full RAG)
+### Ask (Full RAG)
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/query \
+curl -X POST http://localhost:8080/api/v1/ask \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is attention mechanism in neural networks?",
-    "topK": 5,
-    "embedModel": "mxbai-embed-large",
-    "chatModel": "llama3"
+    "question": "What is attention mechanism in neural networks?",
+    "limit": 5,
+    "embeddingModel": "mxbai-embed-large",
+    "completionModel": "llama3"
   }'
 ```
 
 ### Search Only
 
 ```bash
-curl "http://localhost:8080/api/v1/search?q=neural+networks&topK=5&model=mxbai-embed-large"
+curl "http://localhost:8080/api/v1/search?q=neural+networks&limit=5&model=mxbai-embed-large"
 ```
 
-### Health Check
+### Status Check
 
 ```bash
-curl http://localhost:8080/api/v1/health
+curl http://localhost:8080/api/v1/status
 ```
 
 ---
@@ -204,8 +220,8 @@ Configure with:
 ### 3. Submit Jobs
 
 ```bash
-hadoop jar /home/hadoop/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
-  Driver rag s3://your-bucket/paths.txt s3://your-bucket/output mxbai-embed-large COSINE
+hadoop jar /home/hadoop/RAG-LLM-AWS-assembly-1.0.0.jar rag.core.Driver \
+  Driver index s3://your-bucket/paths.txt s3://your-bucket/output mxbai-embed-large COSINE
 ```
 
 ---
@@ -216,9 +232,9 @@ hadoop jar /home/hadoop/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
 |-----------|---------|-------------|
 | `model` | mxbai-embed-large | Ollama embedding model |
 | `similarity` | COSINE | Vector similarity (COSINE, EUCLIDEAN, DOT_PRODUCT) |
-| `linesPerMap` | 50 | PDFs per mapper task |
-| `timeoutMs` | 3600000 | Task timeout in milliseconds |
-| `numReducers` | 8 | Number of index shards |
+| `docsPerMap` | 50 | PDFs per mapper task |
+| `timeout` | 3600000 | Task timeout in milliseconds |
+| `partitions` | 8 | Number of index partitions |
 
 ---
 
@@ -230,7 +246,7 @@ The [`outputs/`](outputs/) directory contains pre-computed results from running 
 
 Demonstrates semantic vector arithmetic (e.g., king - man + woman ≈ queen):
 
-| word_a | word_b | word_c | prediction | score |
+| term_x | term_y | term_z | prediction | score |
 |--------|--------|--------|------------|-------|
 | king | man | woman | **female** | 0.710 |
 | city | country | paris | **amsterdam** | 0.714 |
@@ -241,8 +257,8 @@ Demonstrates semantic vector arithmetic (e.g., king - man + woman ≈ queen):
 
 Cosine similarity between semantically related word pairs:
 
-| word_1 | word_2 | similarity |
-|--------|--------|------------|
+| first_term | second_term | similarity_score |
+|------------|-------------|------------------|
 | unity | unify | 0.804 |
 | sweet | nice | 0.851 |
 | sword | weapon | 0.846 |
@@ -250,19 +266,17 @@ Cosine similarity between semantically related word pairs:
 
 ### Nearest Neighbors (`nearest_neighbors.csv`)
 
-Top-5 semantically similar words for each vocabulary term:
+Top-5 semantically similar tokens for each vocabulary term:
 
-| word | neighbor_1 | sim | neighbor_2 | sim | neighbor_3 | sim |
-|------|------------|-----|------------|-----|------------|-----|
+| token | similar_1 | cosine_1 | similar_2 | cosine_2 | similar_3 | cosine_3 |
+|-------|-----------|----------|-----------|----------|-----------|----------|
 | workshop | workshops | 0.93 | session | 0.73 | training | 0.73 |
 | incident | incidents | 0.87 | occurred | 0.83 | accident | 0.82 |
 | widely | broad | 0.83 | wide | 0.81 | extensively | 0.79 |
 
 ### Vocabulary (`vocab.csv`)
 
-Complete vocabulary with ~75K tokens, frequencies, and 1024-dimensional embeddings.
-
-> **Note:** The full `vocab.csv` file is large (~37MB). Download it to view the complete embeddings.
+Complete vocabulary with 4K+ tokens, frequencies, and 1024-dimensional embeddings.
 
 ---
 

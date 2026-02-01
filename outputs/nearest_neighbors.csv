@@ -1,4 +1,4 @@
-word,neighbor_1,sim_1,neighbor_2,sim_2,neighbor_3,sim_3,neighbor_4,sim_4,neighbor_5,sim_5
+token,similar_1,cosine_1,similar_2,cosine_2,similar_3,cosine_3,similar_4,cosine_4,similar_5,cosine_5
 widely,broad,0.827389,wide,0.810924,extensively,0.794259,broadened,0.778786,greatly,0.765834
 workshop,workshops,0.930025,session,0.734083,training,0.725738,sessions,0.708004,making,0.700141
 incident,incidents,0.873454,occurred,0.830437,accident,0.824336,occurs,0.769407,accidental,0.749906

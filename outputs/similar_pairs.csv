@@ -1,4 +1,4 @@
-word_1,word_2,cosine_similarity
+first_term,second_term,similarity_score
 unity,unify,0.804110
 sweet,nice,0.851102
 sword,weapon,0.846496

@@ -1,5 +1,5 @@
-word_a,word_b,word_c,pred_1 = word_a-word_b+word_c,score_1,pred_2,score_2
-king,man,woman,female,0.7098225420020090,women,0.68243287308805
-city,country,paris,amsterdam,0.7136861236113800,cities,0.7120295342561690
-day,night,summer,days,0.7031710303339070,july,0.7001314305394670
-love,hate,good,nice,0.7167184341207030,wonderful,0.7076902113897250
+term_x,term_y,term_z,prediction,score_1,pred_2,score_2
+king,man,woman,female,0.709823,women,0.682433
+city,country,paris,amsterdam,0.713686,cities,0.712030
+day,night,summer,days,0.703171,july,0.700131
+love,hate,good,nice,0.716718,wonderful,0.707690
