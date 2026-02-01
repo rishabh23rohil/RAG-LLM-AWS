@@ -146,6 +146,11 @@ RAG-LLM-AWS/
 │   │   └── PostProcessEmbeddings.scala # Semantic analysis
 │   └── test/scala/rag/
 │       └── ...                        # Unit & integration tests
+├── outputs/                           # Sample pipeline outputs
+│   ├── vocab.csv                      # 75K word embeddings (1024-dim)
+│   ├── nearest_neighbors.csv          # Semantic neighbors
+│   ├── similar_pairs.csv              # Word similarity scores
+│   └── analogy_pairs.csv              # Vector arithmetic results
 ├── project/
 │   ├── build.properties
 │   └── plugins.sbt
@@ -217,16 +222,47 @@ hadoop jar /home/hadoop/RAG-LLM-AWS-assembly-1.0.0.jar rag.Driver \
 
 ---
 
-## Output Files
+## Sample Outputs
 
-After running the word statistics pipeline:
+The [`outputs/`](outputs/) directory contains pre-computed results from running the pipeline on research papers:
 
-| File | Description |
-|------|-------------|
-| `vocabulary.csv` | Words with token IDs, frequencies, and 1024-dim embeddings |
-| `nearest_neighbors.csv` | Top-5 semantic neighbors for each word |
-| `word_similarities.csv` | Cosine similarity for test word pairs |
-| `word_analogies.csv` | Analogy results (e.g., king - man + woman ≈ queen) |
+### Word Analogies (`analogy_pairs.csv`)
+
+Demonstrates semantic vector arithmetic (e.g., king - man + woman ≈ queen):
+
+| word_a | word_b | word_c | prediction | score |
+|--------|--------|--------|------------|-------|
+| king | man | woman | **female** | 0.710 |
+| city | country | paris | **amsterdam** | 0.714 |
+| day | night | summer | **days** | 0.703 |
+| love | hate | good | **nice** | 0.717 |
+
+### Word Similarities (`similar_pairs.csv`)
+
+Cosine similarity between semantically related word pairs:
+
+| word_1 | word_2 | similarity |
+|--------|--------|------------|
+| unity | unify | 0.804 |
+| sweet | nice | 0.851 |
+| sword | weapon | 0.846 |
+| eye | sight | 0.830 |
+
+### Nearest Neighbors (`nearest_neighbors.csv`)
+
+Top-5 semantically similar words for each vocabulary term:
+
+| word | neighbor_1 | sim | neighbor_2 | sim | neighbor_3 | sim |
+|------|------------|-----|------------|-----|------------|-----|
+| workshop | workshops | 0.93 | session | 0.73 | training | 0.73 |
+| incident | incidents | 0.87 | occurred | 0.83 | accident | 0.82 |
+| widely | broad | 0.83 | wide | 0.81 | extensively | 0.79 |
+
+### Vocabulary (`vocab.csv`)
+
+Complete vocabulary with ~75K tokens, frequencies, and 1024-dimensional embeddings.
+
+> **Note:** The full `vocab.csv` file is large (~37MB). Download it to view the complete embeddings.
 
 ---
 

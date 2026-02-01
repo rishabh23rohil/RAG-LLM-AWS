@@ -1,0 +1,5 @@
+word_a,word_b,word_c,pred_1 = word_a-word_b+word_c,score_1,pred_2,score_2
+king,man,woman,female,0.7098225420020090,women,0.68243287308805
+city,country,paris,amsterdam,0.7136861236113800,cities,0.7120295342561690
+day,night,summer,days,0.7031710303339070,july,0.7001314305394670
+love,hate,good,nice,0.7167184341207030,wonderful,0.7076902113897250
